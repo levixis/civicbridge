@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{% if citizen %}My applications{% else %}Review workspace{% endif %} · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  {% if citizen %}
+    <h1>My applications</h1>
+    <p class="lead">Check progress, manage sharing permissions and see department decisions.</p>
+    <a class="button" href="{% url 'platform_catalog' %}">Browse services</a>
+  {% else %}
+    <h1>Review workspace</h1>
+    <p class="lead">Applications ready for your decision appear first.</p>
+  {% endif %}
+</div>
+
+<section aria-label="Applications" class="request-list">
+  {% for item in requests %}
+    <article class="panel request-summary">
+      <div>
+        <h2>{{ item.definition.title }}</h2>
+        <p class="subtle">Reference {{ item.id|stringformat:'s'|slice:':8' }} · Deadline {{ item.due_at|date:'d M H:i' }}</p>
+      </div>
+      <div class="request-summary-meta">
+        <span class="badge {{ item.status }}">{{ item.status_label }}</span>
+        {% if item.overdue %}<span class="badge failed">{% if item.completed_at %}Completed late{% else %}Overdue{% endif %}</span>{% endif %}
+        <a class="button small" aria-label="Open application {{ item.definition.title }} {{ item.id|stringformat:'s'|slice:':8' }}" href="{% url 'platform_detail' item.pk %}">Open application</a>
+      </div>
+    </article>
+  {% empty %}
+    <div class="panel"><p>{% if citizen %}Your applications will appear here after you apply for a service.{% else %}No applications have been assigned to your department yet.{% endif %}</p></div>
+  {% endfor %}
+</section>
+{% if requests.has_previous or requests.has_next %}
+  <nav aria-label="Application pages">
+    {% if requests.has_previous %}<a href="?page={{ requests.previous_page_number }}">Previous</a>{% endif %}
+    <span>Page {{ requests.number }} of {{ requests.paginator.num_pages }}</span>
+    {% if requests.has_next %}<a href="?page={{ requests.next_page_number }}">Next</a>{% endif %}
+  </nav>
+{% endif %}
+{% if legacy %}
+  <section class="panel">
+    <h2>Earlier scholarship applications</h2>
+    {% for item in legacy %}
+      <p><a href="{% url 'detail' item.pk %}">{{ item.reference|stringformat:'s'|slice:':8' }}</a> · {{ item.get_status_display }}</p>
+    {% endfor %}
+  </section>
+{% endif %}
+{% endblock %}

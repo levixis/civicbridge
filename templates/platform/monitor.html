@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Platform operations · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <h1>Platform operations</h1>
+  <p class="lead">Review citizen identity requests and manage the connections between departments.</p>
+</div>
+
+<section class="panel operator-priority" aria-labelledby="identity-requests-heading">
+  <div>
+    <h2 id="identity-requests-heading">Identity requests</h2>
+    <p>{{ pending_claims }} {{ pending_claims|pluralize:'request,requests' }} waiting for review</p>
+  </div>
+  <a class="button" href="{% url 'platform_claims' %}">Review identity requests</a>
+</section>
+
+<nav class="operations-shortcuts" aria-label="Operations shortcuts">
+  <a href="{% url 'platform_configure' %}">Manage workflows</a>
+  <a href="#service-health">Service health</a>
+  <a href="#overdue">Overdue applications</a>
+  <a href="#delivery-failures">Failed deliveries</a>
+  <a href="#audit-log">Audit log</a>
+</nav>
+
+<section class="panel" id="service-health">
+  <h2>Service health</h2>
+  <ul class="record-list">
+    {% for connector in connectors %}
+      <li>
+        <div><strong>{{ connector.name }}</strong><span>{{ connector.mode }}</span></div>
+        <div>{{ connector.status }}{% if connector.elapsed_ms != None %} · {{ connector.elapsed_ms }} ms{% endif %}</div>
+      </li>
+    {% endfor %}
+  </ul>
+  <h3>Exchange measurements</h3>
+  {% for item in measurements %}
+    <p>{{ item.connector }} · {{ item.calls }} calls · {{ item.mean_ms|floatformat:1 }} ms average</p>
+  {% empty %}
+    <p>No exchanges measured yet.</p>
+  {% endfor %}
+</section>
+
+<section class="panel table-panel">
+  <div class="padded"><h2>Service deadlines</h2></div>
+  <table>
+    <thead><tr><th>Service version</th><th>Requests</th><th>Completed</th><th>Completed on time</th><th>Average completion hours</th></tr></thead>
+    <tbody>{% for stat in stats %}
+      <tr><td>{{ stat.definition }}</td><td>{{ stat.total }}</td><td>{{ stat.completed }}</td><td>{{ stat.on_time }} / {{ stat.completed }}</td><td>{{ stat.mean_hours|default_if_none:'—' }}</td></tr>
+    {% empty %}
+      <tr><td colspan="5">No service versions yet.</td></tr>
+    {% endfor %}</tbody>
+  </table>
+</section>
+
+<section class="panel" id="overdue">
+  <h2>Overdue applications</h2>
+  {% for item in overdue %}
+    <p>{{ item.definition.title }} · {{ item.pk }} · Due {{ item.due_at|date:'d M H:i' }}</p>
+  {% empty %}
+    <p>No overdue applications.</p>
+  {% endfor %}
+</section>
+
+<section class="panel" id="delivery-failures">
+  <h2>Failed deliveries</h2>
+  {% for item in failures %}
+    <p>{{ item.target }} · {{ item.event.kind }} · {{ item.error }}</p>
+    <form method="post" action="{% url 'platform_retry_delivery' item.pk %}">{% csrf_token %}<button class="button secondary">Retry delivery</button></form>
+  {% empty %}
+    <p>No failed deliveries.</p>
+  {% endfor %}
+</section>
+
+<section class="panel" id="audit-log">
+  <h2>Audit log</h2>
+  <p>Checkpoint sequence {{ head.sequence|default:'0' }}</p>
+  <code class="digest">{{ head.digest }}</code>
+  <p>Run <code>python manage.py verify_audit</code> to validate the full audit chain. Keep a separate copy of the checkpoint for comparison.</p>
+  {% for item in audits %}<p>#{{ item.sequence }} · {{ item.record.at }} · {{ item.record.action }} · {{ item.record.outcome }}</p>{% endfor %}
+</section>
+{% endblock %}

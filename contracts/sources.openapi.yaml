@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: CivicBridge local departmental exchange contracts
+  version: 1.0.0
+  description: Local authenticated Revenue/Municipality sources. No live government access is implied.
+servers:
+  - url: http://127.0.0.1:8001
+    description: Revenue
+  - url: http://127.0.0.1:8002
+    description: Municipality
+security:
+  - bearer: []
+paths:
+  /api/v1/income/{subject}/:
+    get:
+      summary: Revenue legacy-schema income JSON
+      servers: [{url: 'http://127.0.0.1:8001'}]
+      parameters:
+        - $ref: '#/components/parameters/subject'
+        - $ref: '#/components/parameters/consent'
+        - $ref: '#/components/parameters/requestId'
+      responses:
+        '200':
+          description: Source-owned income record in the Revenue v1 schema
+          content:
+            application/json:
+              schema: {type: object}
+        '401': {description: Missing or invalid service bearer token}
+        '403': {description: Invalid signed consent scope or audience}
+        '404': {description: No matching resident record}
+        '409': {description: Request identifier conflicts with another disclosure}
+  /api/v1/residence/{subject}/:
+    get:
+      summary: Municipality residence JSON
+      servers: [{url: 'http://127.0.0.1:8002'}]
+      parameters:
+        - $ref: '#/components/parameters/subject'
+        - $ref: '#/components/parameters/consent'
+        - $ref: '#/components/parameters/requestId'
+      responses:
+        '200':
+          description: person_key, record_no, full_name, district, ward, issued, expires and confirmed
+          content:
+            application/json:
+              schema: {type: object}
+        '401': {description: Invalid service authentication}
+        '403': {description: Invalid consent grant}
+        '404': {description: No matching resident}
+        '409': {description: Request identifier conflict}
+  /api/v1/legacy/household/{subject}/:
+    get:
+      summary: Municipality single-row legacy CSV
+      servers: [{url: 'http://127.0.0.1:8002'}]
+      parameters:
+        - $ref: '#/components/parameters/subject'
+        - $ref: '#/components/parameters/consent'
+        - $ref: '#/components/parameters/requestId'
+      responses:
+        '200':
+          description: PERSON_KEY, RECORD_NO, FULL_NAME, MEMBERS, ISSUED, EXPIRES, CONFIRMED
+          content:
+            text/csv:
+              schema: {type: string}
+        '401': {description: Invalid service authentication}
+        '403': {description: Invalid household consent grant}
+        '404': {description: No matching resident}
+        '409': {description: Request identifier conflict}
+  /api/v1/events/:
+    post:
+      summary: Idempotent application status event delivery to either department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, request, sequence, kind, created_at, payload]
+              properties:
+                id: {type: string, format: uuid}
+                request: {type: string, format: uuid}
+                sequence: {type: integer, minimum: 1, maximum: 10000}
+                kind: {type: string, maxLength: 60}
+                created_at: {type: string, format: date-time}
+                payload:
+                  type: object
+                  required: [schema_version, service, version, status, step, label]
+      responses:
+        '200': {description: Received or idempotent duplicate; older sequences do not regress tracker}
+        '400': {description: Invalid event payload}
+        '401': {description: Invalid provider bearer token}
+        '409': {description: Event ID or sequence conflict}
+components:
+  securitySchemes:
+    bearer: {type: http, scheme: bearer}
+  parameters:
+    subject: {name: subject, in: path, required: true, schema: {type: string}}
+    consent:
+      name: X-Consent-Grant
+      in: header
+      required: true
+      description: Timestamped Django-signed grant, at most 60 seconds old; validated audience, subject, scope, purpose, expiry, request and consent revision.
+      schema: {type: string}
+    requestId: {name: X-Request-ID, in: header, required: true, schema: {type: string, format: uuid}}

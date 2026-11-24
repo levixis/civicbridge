@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Sandbox response · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-head"><p class="eyebrow">SANDBOX / SAMPLE DATA ONLY</p><h1>Exchange response</h1><p><a href="{% url 'sandbox' %}">← Sandbox workspace</a></p></div>
+<section class="card" id="sandbox-run" data-status="{{ run.status }}" data-status-url="{% url 'sandbox_status' run.pk %}">
+<h2>{{ run.get_mode_display }}</h2><p>Status: <strong>{{ run.get_status_display }}</strong> · Attempts: {{ run.attempts }} · HTTP: {{ run.http_status|default_if_none:'—' }}</p><p>Reference: {{ run.id }}</p><p>Consent expires: {{ run.expires_at|date:'d M Y H:i' }}</p>
+{% if run.status == 'queued' or run.status == 'running' %}<div class="message" role="status">The worker is processing this request. This page checks progress every five seconds. If it remains queued, start <code>python manage.py run_exchange_worker</code>.</div>{% endif %}
+{% if run.last_error %}<div class="message error">{{ run.last_error }}</div>{% endif %}
+{% if result %}<h3>Received payload · {{ result.source }}</h3><p>{{ result.content_type }} · Sample data. A received response does not establish authenticity or eligibility.</p><pre class="sandbox-payload">{{ result.body }}</pre>{% elif not run.active %}<p>Consent has expired or was revoked. No response is available.</p>{% else %}<p>No response has been stored yet.</p>{% endif %}
+{% if run.active %}<form method="post" action="{% url 'sandbox_revoke' run.pk %}">{% csrf_token %}<button class="button secondary">Revoke consent and remove response</button></form>{% endif %}
+</section><script src="{% static 'sandbox.js' %}" defer></script>
+{% endblock %}

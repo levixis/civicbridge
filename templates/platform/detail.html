@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ req.definition.title }} · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <a class="back-link" href="{% url 'platform_workspace' %}">← {% if owner %}My applications{% else %}Review workspace{% endif %}</a>
+  <h1>{{ req.definition.title }}</h1>
+  <div class="application-meta">
+    <span class="badge {{ req.status }}">{{ status_label }}</span>
+    <span>Deadline {{ req.due_at|date:'d M Y H:i' }}</span>
+    {% if req.overdue %}<span class="badge failed">{% if req.completed_at %}Completed late{% else %}Overdue{% endif %}</span>{% endif %}
+    {% if can_grant %}<a href="#sharing-heading">{% if req.status == 'exchange_failed' %}Retry collection{% else %}Review sharing permission{% endif %} ↓</a>{% endif %}
+    {% if can_review %}<a href="#review-decision">Go to decision form ↓</a>{% endif %}
+  </div>
+</div>
+<div id="platform-request" data-state="{{ req.status }}:{{ req.step }}" data-url="{% url 'platform_tracker' req.pk %}"></div>
+
+<div class="grid two application-layout">
+  <section class="panel" aria-labelledby="application-progress">
+    <h2 id="application-progress">Application progress</h2>
+    <ol class="progress-list">
+      {% for step in steps %}
+        <li {% if forloop.counter0 == req.step and not req.terminal and req.status != 'withdrawn' %}aria-current="step"{% endif %}>
+          <div>
+            <strong>{% if step.kind == 'fetch' %}{{ step.label }}{% else %}{{ step.label }} review{% endif %}</strong>
+            {% if step.kind == 'fetch' %}<span class="progress-source">{{ step.source }}</span>{% endif %}
+          </div>
+          {% if forloop.counter0 < req.step %}
+            <span class="badge green">Complete</span>
+          {% elif forloop.counter0 == req.step and req.status == 'rejected' %}
+            <span class="badge rejected">Rejected</span>
+          {% elif forloop.counter0 == req.step and req.status == 'exchange_failed' %}
+            <span class="badge failed">Try again</span>
+          {% elif forloop.counter0 == req.step and not req.terminal and req.status != 'withdrawn' %}
+            <span class="badge verified">Current step</span>
+          {% else %}
+            <span class="badge">Not started</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+    {% if req.status == 'withdrawn' %}
+      <p>Sharing ended after a department had already reviewed the application.</p>
+      {% if owner %}<a href="{% url 'platform_catalog' %}">Start a new application</a>{% endif %}
+    {% elif req.status == 'processing' %}
+      <p class="subtle">CivicBridge is collecting the records. This page updates as each step finishes.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel consent-panel{% if can_grant %} permission-needed{% endif %}" aria-labelledby="sharing-heading">
+    <h2 id="sharing-heading">{% if can_grant %}Give permission to share records{% else %}Record sharing{% endif %}</h2>
+    <p>The reviewing departments can use these records for this application while permission is active.</p>
+    <ul class="record-list">
+      {% for step in requirements %}
+        <li>
+          <div><strong>{{ step.label }}</strong><span>{{ step.source }}</span></div>
+          {% if step.permission.active %}<span>Allowed until {{ step.permission.expires_at|date:'d M H:i' }}</span>
+          {% elif step.permission %}<span>Permission ended</span>
+          {% else %}<span>Permission needed</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    {% if can_grant %}
+      {% if missing_links %}
+        <p class="notice">To collect these records, CivicBridge needs a verified account link for {{ missing_links|join:', ' }}. <a href="{% url 'platform_identities' %}">Manage department account links</a>.</p>
+      {% endif %}
+      <p>You can stop sharing at any time. This removes the copies held by CivicBridge.</p>
+      <form method="post" action="{% url 'platform_grant' req.pk %}">
+        {% csrf_token %}
+        <div class="checkbox-row">{{ consent_form.agree }}{{ consent_form.agree.label_tag }}</div>
+        <button class="button">{% if req.status == 'exchange_failed' %}Retry record collection{% else %}Allow sharing{% endif %}</button>
+      </form>
+    {% endif %}
+    {% if can_revoke %}
+      <form method="post" action="{% url 'platform_revoke' req.pk %}">
+        {% csrf_token %}
+        <button class="button secondary">Stop sharing and remove copies</button>
+      </form>
+    {% endif %}
+  </section>
+</div>
+
+{% if decisions %}
+  <section class="panel">
+    <h2>Department decisions</h2>
+    {% for item in decisions %}
+      <p><strong>{{ item.decision|capfirst }}</strong> · {{ item.created_at|date:'d M H:i' }} · {{ item.actor.username }}</p>
+      <p>{{ item.note }}</p>
+    {% endfor %}
+  </section>
+{% endif %}
+
+<section class="panel">
+  <h2>Shared records</h2>
+  {% for step in requirements %}
+    {% if step.record %}
+      <article class="record-card">
+        <h3>{{ step.label }} <span class="subtle">· {{ step.source }}</span></h3>
+        <p>{{ step.record.holder }} · Record {{ step.record.document_id }} · Valid until {{ step.record.valid_until }}</p>
+        <dl>
+          {% for key, value in step.record.attributes.items %}
+            <dt>{% if key == 'annual_income' %}Annual income{% elif key == 'members' %}Household members{% else %}{{ key|capfirst }}{% endif %}</dt>
+            <dd>{% if key == 'annual_income' %}₹{% endif %}{{ value }}</dd>
+          {% endfor %}
+        </dl>
+        <details>
+          <summary>How this record was matched</summary>
+          <p>CivicBridge matched the record to the linked department account and converted it from {{ step.source_format }} to common record format {{ step.record.schema_version }}.</p>
+        </details>
+      </article>
+    {% endif %}
+  {% endfor %}
+  {% if not has_records %}<p>There are no records available to view for this application.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Application details</h2>
+  <p>{{ req.details.description }}</p>
+  <p class="subtle application-reference">Reference {{ req.pk }} · Submitted {{ req.created_at|date:'d M Y H:i' }}</p>
+  <details{% if req.status == 'exchange_failed' %} open{% endif %}>
+    <summary>Application activity</summary>
+    <ol class="timeline">
+      {% for item in events %}
+        <li>{{ item.created_at|date:'d M H:i' }} · {{ item.payload.label }}</li>
+      {% endfor %}
+    </ol>
+  </details>
+</section>
+{% if can_review %}
+  <section class="panel form-panel" id="review-decision">
+    <h2>Record your decision</h2>
+    <form method="post" action="{% url 'platform_review' req.pk %}">
+      {% csrf_token %}
+      {{ review_form.as_p }}
+      <button class="button">Record decision</button>
+    </form>
+  </section>
+{% endif %}
+<script src="{% static 'platform.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"urn:civicbridge:record:1.0",
+  "title":"CivicBridge common departmental record v1.0",
+  "type":"object",
+  "required":["schema_version","type","document_id","subject_id","holder","issuer","issued_on","valid_until","verified","attributes"],
+  "properties":{
+    "schema_version":{"const":"1.0"},
+    "type":{"enum":["income_certificate","residence_certificate","household_certificate"]},
+    "document_id":{"type":"string","minLength":1,"maxLength":200},
+    "subject_id":{"type":"string","minLength":1,"maxLength":200},
+    "holder":{"type":"string","minLength":1,"maxLength":200},
+    "issuer":{"type":"string","minLength":1,"maxLength":200},
+    "issued_on":{"type":"string","format":"date"},
+    "valid_until":{"type":"string","format":"date"},
+    "verified":{"const":true},
+    "attributes":{"type":"object"}
+  },
+  "allOf":[
+    {"if":{"properties":{"type":{"const":"income_certificate"}}},"then":{"properties":{"attributes":{"required":["annual_income"],"properties":{"annual_income":{"type":"integer","minimum":0,"maximum":1000000000000}}}}}},
+    {"if":{"properties":{"type":{"const":"residence_certificate"}}},"then":{"properties":{"attributes":{"required":["district"],"properties":{"district":{"type":"string","minLength":1,"maxLength":100}}}}}},
+    {"if":{"properties":{"type":{"const":"household_certificate"}}},"then":{"properties":{"attributes":{"required":["members"],"properties":{"members":{"type":"integer","minimum":1,"maximum":100}}}}}}
+  ],
+  "description":"Application validation also checks reviewed subject identity, date ordering and current expiry. verified is issuer metadata, not a cryptographic government-signature verification."
+}

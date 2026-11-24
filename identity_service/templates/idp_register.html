@@ -1,0 +1,1 @@
+{% extends 'idp_base.html' %}{% block content %}<section class="panel auth-panel"><h1>Create a local identity</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button class="button">Create identity</button></form><p>Creating an identity does not establish government identity or grant departmental permissions.</p></section>{% endblock %}

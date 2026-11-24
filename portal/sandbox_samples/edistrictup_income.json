@@ -1,0 +1,25 @@
+{
+  "txnId": "f7f1469c-29b0-4325-9dfc-c567200a70f7",
+  "format": "xml",
+  "certificateParameters": {
+    "ApplicationNo": "Application No",
+    "CertificateID": "CertificateID"
+  },
+  "consentArtifact": {
+    "consent": {
+      "consentId": "ea9c43aa-7f5a-4bf3-a0be-e1caa24737ba",
+      "timestamp": "2024-12-03T11:07:33.974Z",
+      "dataConsumer": {"id": "string"},
+      "dataProvider": {"id": "string"},
+      "purpose": {"description": "string"},
+      "user": {"idType": "string", "idNumber": "string", "mobile": "9988776655", "email": "test@email.com"},
+      "data": {"id": "string"},
+      "permission": {
+        "access": "string",
+        "dateRange": {"from": "2024-12-03T11:07:33.974Z", "to": "2024-12-03T11:07:33.974Z"},
+        "frequency": {"unit": "string", "value": 0, "repeats": 0}
+      }
+    },
+    "signature": {"signature": "string"}
+  }
+}

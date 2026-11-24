@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>Apply in one place. <em>Reuse records you already have.</em></h1>
+    <p class="lead">Choose a service and give permission to share the records it needs. CivicBridge collects them from the departments that hold them. You can follow the application through to the decision.</p>
+    <div class="actions">
+      <a class="button" href="{% url 'platform_catalog' %}">Browse services</a>
+      {% if operator_role %}
+        <a class="button secondary" href="{% url 'platform_monitor' %}">Platform operations</a>
+      {% else %}
+        <a class="button secondary" href="{% url 'platform_workspace' %}">{% if user.is_authenticated and not citizen_role %}Review workspace{% else %}Track applications{% endif %}</a>
+      {% endif %}
+    </div>
+  </div>
+  <section class="journey-card" aria-labelledby="housing-example">
+    <h2 id="housing-example">How a housing application works</h2>
+    <ol class="example-flow">
+      <li>
+        <strong>You apply and give permission</strong>
+        <p>See which records will be shared and who will review the application.</p>
+      </li>
+      <li>
+        <strong>Departments provide their records</strong>
+        <p>Revenue sends your income certificate. Municipality sends your residence and household records. CivicBridge checks them and puts them in a common format.</p>
+      </li>
+      <li>
+        <strong>Welfare reviews the application</strong>
+        <p>Follow each step and see the decision in your application tracker.</p>
+      </li>
+    </ol>
+  </section>
+</section>
+{% endblock %}

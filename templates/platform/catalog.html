@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Browse services · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <h1>Browse services</h1>
+  <p class="lead">See which records each service needs. With your permission, CivicBridge retrieves them directly from the departments.</p>
+</div>
+<div class="grid two">
+  {% for service in services %}
+    <article class="panel service-card">
+      <h2>{{ service.definition.title }}</h2>
+      <p>{{ service.description }}</p>
+      <h3>Records used</h3>
+      <ul class="record-list">
+        {% for step in service.records %}
+          <li><strong>{{ step.label }}</strong><span>{{ step.source }}</span></li>
+        {% endfor %}
+      </ul>
+      <p>Reviewed by {{ service.reviewers|join:', ' }}.</p>
+      <p class="subtle">Service deadline is {{ service.definition.sla_hours }} hours from submission.</p>
+      {% if can_apply %}<a class="button" href="{% url 'platform_create' service.definition.pk %}" aria-label="Apply for {{ service.definition.title }}">Start application</a>{% endif %}
+    </article>
+  {% empty %}
+    <div class="panel"><p>No services are available yet.</p></div>
+  {% endfor %}
+</div>
+{% if not can_apply %}
+  {% if operator_role %}<a href="{% url 'platform_monitor' %}">Go to platform operations</a>
+  {% else %}<a href="{% url 'platform_workspace' %}">Go to review workspace</a>{% endif %}
+{% endif %}
+{% endblock %}

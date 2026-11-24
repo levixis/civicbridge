@@ -1,0 +1,96 @@
+# Historical two-service profile. The complete LOCAL platform uses compose.platform.yaml.
+services:
+  portal-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: civicbridge
+      POSTGRES_USER: ${POSTGRES_USER:?Run init_env.py}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run init_env.py}
+    volumes: [portal-db:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d civicbridge']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  revenue-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: revenue
+      POSTGRES_USER: ${REVENUE_POSTGRES_USER:?Run init_env.py}
+      POSTGRES_PASSWORD: ${REVENUE_POSTGRES_PASSWORD:?Run init_env.py}
+    volumes: [revenue-db:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d revenue']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  portal:
+    build: .
+    environment: &portal-env
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-1}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Run init_env.py}
+      DOCUMENT_ENCRYPTION_KEY: ${DOCUMENT_ENCRYPTION_KEY:?Run init_env.py}
+      GRANT_SIGNING_KEY: ${GRANT_SIGNING_KEY:?Run init_env.py}
+      REVENUE_API_TOKEN: ${REVENUE_API_TOKEN:?Run init_env.py}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      ALLOW_LOCAL_HTTP: ${ALLOW_LOCAL_HTTP:-1}
+      POSTGRES_HOST: portal-db
+      POSTGRES_DB: civicbridge
+      POSTGRES_USER: ${POSTGRES_USER:?Run init_env.py}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run init_env.py}
+      REVENUE_API_URL: http://revenue:8000
+      SANDBOX_ENABLED: ${SANDBOX_ENABLED:-1}
+      EMAIL_HOST: ${EMAIL_HOST:-localhost}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@localhost}
+    command: [sh, -c, 'python manage.py migrate && python manage.py collectstatic --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --access-logfile -']
+    ports: [127.0.0.1:8000:8000]
+    depends_on:
+      portal-db: {condition: service_healthy}
+      revenue: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/health/",timeout=3)']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  revenue:
+    build: .
+    working_dir: /app/revenue_service
+    environment:
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-1}
+      REVENUE_DJANGO_SECRET_KEY: ${REVENUE_DJANGO_SECRET_KEY:?Run init_env.py}
+      GRANT_SIGNING_KEY: ${GRANT_SIGNING_KEY:?Run init_env.py}
+      REVENUE_API_TOKEN: ${REVENUE_API_TOKEN:?Run init_env.py}
+      REVENUE_ALLOWED_HOSTS: ${REVENUE_ALLOWED_HOSTS:-localhost,127.0.0.1,revenue}
+      REVENUE_CSRF_TRUSTED_ORIGINS: ${REVENUE_CSRF_TRUSTED_ORIGINS:-}
+      ALLOW_LOCAL_HTTP: ${ALLOW_LOCAL_HTTP:-1}
+      REVENUE_POSTGRES_HOST: revenue-db
+      REVENUE_POSTGRES_DB: revenue
+      REVENUE_POSTGRES_USER: ${REVENUE_POSTGRES_USER:?Run init_env.py}
+      REVENUE_POSTGRES_PASSWORD: ${REVENUE_POSTGRES_PASSWORD:?Run init_env.py}
+    command: [sh, -c, 'python manage.py migrate && python manage.py collectstatic --noinput && exec gunicorn revenue_config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --access-logfile -']
+    ports: [127.0.0.1:8001:8000]
+    depends_on:
+      revenue-db: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/health/",timeout=3)']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  worker:
+    build: .
+    environment: *portal-env
+    command: [python, manage.py, run_exchange_worker]
+    depends_on:
+      portal: {condition: service_healthy}
+    restart: unless-stopped
+volumes:
+  portal-db:
+  revenue-db:

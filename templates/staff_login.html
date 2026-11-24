@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Department staff sign-in · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <h1>Department staff sign-in</h1>
+  <p class="lead">Choose your department to manage records or review applications.</p>
+</div>
+<div class="grid two staff-departments">
+  {% for department in departments %}
+    <section class="panel">
+      <h2>{{ department.name }}</h2>
+      <p>{{ department.description }}</p>
+      <a class="button" href="{% url 'staff_start' department.code %}">Sign in to {{ department.name }}</a>
+    </section>
+  {% endfor %}
+</div>
+<section class="panel form-panel staff-local">
+  <details{% if form.errors %} open{% endif %}>
+    <summary>Use a local reviewer or platform operator account</summary>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="button">Sign in to staff workspace</button>
+    </form>
+  </details>
+</section>
+<p class="sign-in-switch">Applying for a service? <a href="{% url 'login' %}">Citizen sign-in</a></p>
+{% endblock %}

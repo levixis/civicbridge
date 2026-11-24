@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Workflows · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <h1>Workflows</h1>
+  <p class="lead">Manage the steps and departments for each service. Existing applications keep the workflow they started with.</p>
+  <a class="button" href="#workflow-form">Create workflow version</a>
+</div>
+
+<section class="panel">
+  <h2>Saved workflows</h2>
+  <ul class="record-list">
+    {% for item in definitions %}
+      <li>
+        <div><strong>{{ item }}</strong><span>{% if item.published %}Published{% else %}Draft{% endif %}</span></div>
+        <a class="button secondary small" href="{% url 'platform_new_version' item.pk %}#workflow-form">Copy as a new version</a>
+      </li>
+    {% empty %}
+      <li>No workflows have been saved yet.</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<div class="grid two" id="workflow-form">
+  <section class="panel">
+    <h2>New workflow version</h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="button">Save workflow version</button>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>Available connectors</h2>
+    {% for adapter in adapters %}
+      <h3>{{ adapter.code }} · {{ adapter.format }}</h3>
+      {% for scope in adapter.scopes %}<p>{{ scope }}</p>{% endfor %}
+    {% endfor %}
+    <h2>Example workflow</h2>
+    <pre class="sandbox-payload">[
+  {"id":"income","kind":"fetch","connector":"revenue","scope":"income_certificate"},
+  {"id":"review","kind":"review","role":"Education Officers"}
+]</pre>
+    <p>Use the registered connections and one of these review roles. Education Officers, Welfare Officers, or Municipal Reviewers.</p>
+  </section>
+</div>
+{% endblock %}

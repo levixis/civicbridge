@@ -1,0 +1,17 @@
+{% extends 'source_base.html' %}
+{% block content %}
+<div class="page-heading"><h1>Sign in to Revenue</h1></div>
+<div class="panel form-panel">
+  <a class="button" href="{% url 'sso_start' %}{% if next %}?next={{ next|urlencode:'' }}{% endif %}">Shared sign-in</a>
+  <p class="subtle"><a href="{% url 'sso_start' %}?prompt=login{% if next %}&amp;next={{ next|urlencode:'' }}{% endif %}">Use a different shared account</a></p>
+  <details class="local-sign-in"{% if form.errors %} open{% endif %}>
+    <summary>Use a local Revenue account</summary>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="button secondary">Sign in</button>
+    </form>
+  </details>
+</div>
+{% endblock %}

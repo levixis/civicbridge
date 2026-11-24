@@ -1,0 +1,6 @@
+{$PORTAL_DOMAIN} {
+    reverse_proxy portal:8000
+}
+{$REVENUE_DOMAIN} {
+    reverse_proxy revenue:8000
+}

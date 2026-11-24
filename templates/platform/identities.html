@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Department account links · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <h1>Department account links</h1>
+  <p class="lead">Add the ID from an existing department record. An operator checks that the record belongs to you before CivicBridge can use it.</p>
+</div>
+
+<div class="grid two">
+  <section class="panel">
+    <h2>Link a department ID</h2>
+    <ul>
+      <li><strong>Municipality</strong> uses the <strong>Person key</strong> from your residence and household record.</li>
+      <li><strong>Revenue</strong> uses the <strong>Resident ID</strong> from your income certificate.</li>
+    </ul>
+    <p>If you need a record issued first, contact the department that holds it.</p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="button">Request link</button>
+    </form>
+    <p class="subtle">Changing an approved ID ends sharing based on the old ID and removes the related copies from CivicBridge.</p>
+  </section>
+
+  <div>
+    <section class="panel">
+      <h2>Approved links</h2>
+      {% if links %}
+        <ul class="record-list">
+          {% for link in links %}<li><strong>{{ link.department|capfirst }}</strong><span>{{ link.external_id }}</span></li>{% endfor %}
+        </ul>
+      {% else %}
+        <p>No department IDs are linked yet.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Link requests</h2>
+      {% for item in claims %}
+        <article class="record-card">
+          <div class="request-summary-meta">
+            <strong>{{ item.department|capfirst }} · {{ item.external_id }}</strong>
+            <span class="badge {{ item.status }}">{% if item.status == 'pending' %}Pending operator review{% else %}{{ item.status|capfirst }}{% endif %}</span>
+          </div>
+          {% if item.note %}<p>{{ item.note }}</p>{% endif %}
+          {% if item.status == 'pending' %}
+            <form method="post" action="{% url 'platform_withdraw_claim' item.pk %}">
+              {% csrf_token %}
+              <button class="button secondary small" aria-label="Withdraw request for {{ item.department }} ID {{ item.external_id }}">Withdraw request</button>
+            </form>
+          {% endif %}
+        </article>
+      {% empty %}
+        <p>No link requests yet.</p>
+      {% endfor %}
+    </section>
+  </div>
+</div>
+{% endblock %}

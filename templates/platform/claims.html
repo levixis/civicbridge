@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Identity requests · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  {% if item %}<a class="back-link" href="{% url 'platform_claims' %}">← All identity requests</a>{% endif %}
+  <h1>{% if item %}Review identity request{% else %}Identity requests{% endif %}</h1>
+  {% if not item %}<p class="lead">Review requests from citizens who want to link a department record to their account.</p>{% endif %}
+</div>
+
+{% if item %}
+  <section class="panel claim-review">
+    <h2>{{ item.department|capfirst }} link</h2>
+    <dl class="claim-facts">
+      <dt>Citizen account</dt><dd>{{ item.citizen.user.username }}</dd>
+      <dt>{{ item.department|capfirst }} ID</dt><dd>{{ item.external_id }}</dd>
+      <dt>Status</dt><dd><span class="badge {{ item.status }}">{{ item.status|capfirst }}</span></dd>
+    </dl>
+    {% if item.status == 'pending' %}
+      <p>Check that this ID exists in the department registry and belongs to the applicant. Record the evidence you used to make your decision.</p>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="button">Save decision</button>
+      </form>
+    {% else %}
+      {{ form.non_field_errors }}
+      {% if item.note %}<p>{{ item.note }}</p>{% endif %}
+      <a href="{% url 'platform_claims' %}">Return to pending requests</a>
+    {% endif %}
+  </section>
+{% else %}
+  <section class="request-list" aria-label="Pending identity requests">
+    <h2>Pending review</h2>
+    {% for claim in claims %}
+      <article class="panel request-summary">
+        <div>
+          <h3>{{ claim.department|capfirst }} · {{ claim.external_id }}</h3>
+          <p class="subtle">{{ claim.citizen.user.username }} · Requested {{ claim.created_at|date:'d M, H:i' }}</p>
+        </div>
+        <a class="button small" href="{% url 'platform_claim_review' claim.pk %}" aria-label="Review request for {{ claim.department }} ID {{ claim.external_id }}">Review request</a>
+      </article>
+    {% empty %}
+      <div class="panel"><p>No identity requests are waiting for review.</p></div>
+    {% endfor %}
+  </section>
+{% endif %}
+{% endblock %}

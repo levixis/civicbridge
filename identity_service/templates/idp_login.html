@@ -1,0 +1,13 @@
+{% extends 'idp_base.html' %}
+{% block content %}
+<section class="panel auth-panel">
+  <h1>Shared identity sign-in</h1>
+  <p>{% if switching %}Enter the email or username for the account you want to use, along with its password.{% else %}Use your local Identity email or username and password.{% endif %}</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="button">Sign in</button>
+  </form>
+</section>
+{% endblock %}

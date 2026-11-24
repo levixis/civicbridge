@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Inbox · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <h1>Inbox</h1>
+  <p class="lead">Open an application from its notification to see what changed.</p>
+</div>
+{% for item in items %}
+  <article class="panel">
+    <p class="subtle">{{ item.created_at|date:'d M H:i' }} · {% if item.read_at %}Read{% else %}Unread{% endif %}</p>
+    <h2>{{ item.title }}</h2>
+    <p>{{ item.event.request.definition.title }} · Reference {{ item.event.request_id|stringformat:'s'|slice:':8' }}</p>
+    <div class="notification-actions">
+      {% if item.event.kind == 'deadline.breached' and operator_role %}
+        <a class="button small" href="{% url 'platform_monitor' %}">Inspect overdue services</a>
+      {% else %}
+        <a class="button small" aria-label="Open application {{ item.event.request.definition.title }} {{ item.event.request_id|stringformat:'s'|slice:':8' }}" href="{% url 'platform_detail' item.event.request_id %}">Open application</a>
+      {% endif %}
+      {% if not item.read_at %}
+        <form method="post" action="{% url 'platform_read_notification' item.pk %}">
+          {% csrf_token %}
+          <button class="button secondary small">Mark as read</button>
+        </form>
+      {% endif %}
+    </div>
+  </article>
+{% empty %}
+  <div class="panel"><p>No notifications yet.</p></div>
+{% endfor %}
+{% if items.has_previous or items.has_next %}
+  <nav aria-label="Inbox pages">
+    {% if items.has_previous %}<a href="?page={{ items.previous_page_number }}">Previous</a>{% endif %}
+    <span>Page {{ items.number }} of {{ items.paginator.num_pages }}</span>
+    {% if items.has_next %}<a href="?page={{ items.next_page_number }}">Next</a>{% endif %}
+  </nav>
+{% endif %}
+{% endblock %}

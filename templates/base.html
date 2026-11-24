@@ -1,0 +1,57 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}CivicBridge{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+  <header class="portal-header">
+    <div class="portal-header-inner">
+      <div class="portal-header-top">
+        <a class="brand" href="{% url 'home' %}"><span class="brand-mark" aria-hidden="true">C</span>Civic<span>Bridge</span></a>
+        <div class="portal-account">
+          {% if user.is_authenticated %}
+            <span class="username">{{ user.username }}</span>
+            <form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="text-button">Sign out</button></form>
+          {% else %}
+            <a href="{% url 'login' %}">Citizen sign-in</a>
+            <a class="button small secondary" href="{% url 'staff_login' %}">Department staff</a>
+          {% endif %}
+        </div>
+      </div>
+      <nav class="portal-navigation" aria-label="Main navigation">
+        {% if user.is_authenticated %}
+          {% for item in portal_navigation %}
+            <a href="{{ item.url }}"{% if item.current %} aria-current="location"{% endif %}>{{ item.label }}</a>
+          {% endfor %}
+          <details class="nav-tools">
+            <summary>Other tools</summary>
+            <div>
+              {% if not citizen_role %}<a href="{% url 'platform_catalog' %}">Services catalog</a>{% endif %}
+              <a href="{% url 'sandbox' %}">API Sandbox</a>
+              {% if citizen_role or education_role %}
+                <a href="{% url 'dashboard' %}">Original scholarship portal</a>
+              {% endif %}
+              {% if operator_role %}
+                <a href="{% url 'monitor' %}">Original exchange monitor</a>
+                <a href="{% url 'identity_queue' %}">Original identity reviews</a>
+              {% endif %}
+            </div>
+          </details>
+        {% else %}
+          {% if staff_sign_in %}<a href="{% url 'staff_login' %}" aria-current="page">Department workspaces</a>
+          {% else %}<a href="{% url 'platform_catalog' %}">Citizen services</a>{% endif %}
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+  <main>
+    {% for message in messages %}<div role="status" class="message {{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer><span>CivicBridge</span><span>Local prototype with fictional records</span><span>SIH26129 · INT253</span></footer>
+</body>
+</html>

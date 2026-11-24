@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Apply for {{ definition.title }} · CivicBridge{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <a class="back-link" href="{% url 'platform_catalog' %}">← Browse services</a>
+  <h1>{{ definition.title }}</h1>
+  <p class="lead">{{ description }}</p>
+</div>
+<section class="panel form-panel">
+  <h2>Application details</h2>
+  <p>Tell the reviewing department why you’re applying. After you submit, you can see which records are needed and give permission to share them.</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="button">Submit application</button>
+  </form>
+</section>
+{% endblock %}
