@@ -240,17 +240,11 @@ summary {
   }
 }
 
-.sign-in-options {
-  align-items: start;
+.portal-password-sign-in summary {
+  cursor: pointer;
 }
-.sign-in-options .panel > .button {
-  margin-top: 8px;
-}
-.sign-in-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  font-size: 14px;
+.portal-password-sign-in form {
+  margin-top: 16px;
 }
 .staff-departments .panel {
   display: flex;

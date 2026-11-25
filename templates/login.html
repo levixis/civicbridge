@@ -1,28 +1,26 @@
 {% extends 'base.html' %}
 {% block title %}Citizen sign-in · CivicBridge{% endblock %}
 {% block content %}
-<div class="page-heading"><h1>Citizen sign-in</h1><p class="lead">Apply for services, manage record sharing and track your applications.</p></div>
-<div class="grid two sign-in-options">
-  <section class="panel">
-    <h2>Your citizen account</h2>
-    <p>Enter the details you used to create your CivicBridge account.</p>
+<div class="page-heading">
+  <h1>Citizen sign-in</h1>
+  <p class="lead">Use CivicIdentity to apply for services and track your applications.</p>
+</div>
+<section class="panel form-panel">
+  <a class="button" href="{% url 'sso_start' %}{% if next %}?next={{ next|urlencode:'' }}{% endif %}">Continue with shared sign-in</a>
+  <p class="subtle">Trying the demo? Use the shared account <strong>citizen</strong>.</p>
+  <a href="{% url 'sso_start' %}?prompt=login{% if next %}&amp;next={{ next|urlencode:'' }}{% endif %}">Switch shared account</a>
+</section>
+<section class="panel form-panel">
+  <details class="portal-password-sign-in"{% if form.errors %} open{% endif %}>
+    <summary>Sign in with an existing portal password</summary>
     <form method="post">
       {% csrf_token %}
       {{ form.as_p }}
       <input type="hidden" name="next" value="{{ next }}">
-      <button class="button">Sign in as a citizen</button>
+      <button class="button">Sign in with portal password</button>
     </form>
-    <div class="sign-in-links">
-      <a href="{% url 'password_reset' %}">Forgot your password?</a>
-      <a href="{% url 'register' %}">Create a citizen account</a>
-    </div>
-  </section>
-  <section class="panel">
-    <h2>Citizen shared sign-in</h2>
-    <p>Use your shared citizen identity. The demo citizen username is citizen.</p>
-    <a class="button" href="{% url 'sso_start' %}{% if next %}?next={{ next|urlencode:'' }}{% endif %}">Continue with shared sign-in</a>
-    <p class="subtle"><a href="{% url 'sso_start' %}?prompt=login{% if next %}&amp;next={{ next|urlencode:'' }}{% endif %}">Use a different shared account</a></p>
-  </section>
-</div>
+    <p class="subtle"><a href="{% url 'password_reset' %}">Forgot your portal password?</a></p>
+  </details>
+</section>
 <p class="sign-in-switch">Working for a department? <a href="{% url 'staff_login' %}">Department staff sign-in</a></p>
 {% endblock %}

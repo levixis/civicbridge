@@ -22,12 +22,19 @@ class SignInSeparationTests(TestCase):
     def test_citizen_and_staff_have_separate_sign_in_pages(self):
         citizen_page = self.client.get(reverse("login"))
         self.assertContains(citizen_page, "<h1>Citizen sign-in</h1>", html=True)
+        self.assertContains(citizen_page, "Continue with shared sign-in")
+        self.assertContains(citizen_page, '<details class="portal-password-sign-in">')
+        self.assertNotContains(citizen_page, "Create a citizen account")
         self.assertContains(citizen_page, reverse("staff_login"))
         staff_page = self.client.get(reverse("staff_login"))
         self.assertContains(staff_page, "<h1>Department staff sign-in</h1>", html=True)
         for department in ["revenue", "municipality", "education", "welfare", "operations"]:
             self.assertContains(staff_page, reverse("staff_start", args=[department]))
         self.assertNotContains(staff_page, "Start application")
+
+    def test_invalid_portal_password_keeps_the_citizen_form_open(self):
+        response = self.client.post(reverse("login"), {"username": self.citizen.username, "password": "wrong"})
+        self.assertContains(response, '<details class="portal-password-sign-in" open>')
 
     def test_local_sign_in_forms_enforce_their_account_type(self):
         CitizenAuthenticationForm().confirm_login_allowed(self.citizen)

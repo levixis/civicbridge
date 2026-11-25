@@ -28,7 +28,7 @@ python scripts/run_local.py --seed
 
 Open [the service catalogue](http://127.0.0.1:8000/services/). Revenue is on port 8001, Municipality on 8002, and Identity on 8003. The exchange worker runs in the background. Use `127.0.0.1` consistently because the shared sign-in checks its registered callback addresses. Press Ctrl+C to stop the services.
 
-Choose **Shared sign-in** and use the **Identity sign-in** password printed for the account. New passwords are printed once. Local department passwords are separate. The launcher preserves existing accounts and records on subsequent runs. Use separate browser profiles for the citizen and staff accounts.
+Choose **Citizen sign-in → Continue with shared sign-in** to apply as a citizen. To review applications or manage records, choose **Department staff** and select your department. Use the **Identity sign-in** password printed for the selected account. Existing portal accounts can sign in under **Sign in with an existing portal password**. The launcher prints new passwords once and preserves accounts and records on subsequent runs. Use separate browser profiles for the citizen and staff accounts.
 
 ## Walk through the demo
 
@@ -83,7 +83,7 @@ python manage.py verify_audit
 
 The first command runs Django checks, migration checks, static collection, test suites and two HTTP integration scripts. The HTTP checks use isolated databases and loopback servers. The audit command verifies the active portal database and prints a checkpoint you can retain independently.
 
-The current local verification passed 139 Django tests and both HTTP scripts. Two portal-only tests were skipped when running the same suite against the source services.
+The current local verification passed 140 Django tests and both HTTP scripts. Two portal-only tests were skipped when running the same suite against the source services.
 
 ## Host the grading demo on Render
 
