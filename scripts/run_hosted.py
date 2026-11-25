@@ -52,10 +52,17 @@ def main():
     subprocess.run([sys.executable, "scripts/init_env.py"], cwd=ROOT, env=env, check=True)
     seed_env = env | {"DJANGO_DEBUG": "1"}
     for directory, _, _, commands in WEB_SERVICES:
-        for args in (("migrate", "--noinput"), ("collectstatic", "--noinput")):
-            subprocess.run([sys.executable, "manage.py", *args], cwd=directory, env=env, check=True, stdout=subprocess.DEVNULL)
-        for command in commands:
-            subprocess.run([sys.executable, "manage.py", command], cwd=directory, env=seed_env, check=True, stdout=subprocess.DEVNULL)
+        label = "portal" if directory == ROOT else directory.name
+        print(f"Preparing the {label} database and fictional demo records.", flush=True)
+        initialization = "\n".join([
+            "from django.core.management import call_command",
+            "call_command('migrate', interactive=False, verbosity=0)",
+            *(f"call_command({command!r})" for command in commands),
+        ])
+        subprocess.run(
+            [sys.executable, "manage.py", "shell", "--command", initialization],
+            cwd=directory, env=seed_env, check=True, stdout=subprocess.DEVNULL,
+        )
 
     nginx_config = ROOT / "deploy/nginx.conf"
     runtime_config = Path("/tmp/civicbridge-nginx.conf")

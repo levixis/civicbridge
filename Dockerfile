@@ -14,5 +14,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY --chown=civicbridge:civicbridge . .
 
 USER civicbridge
+RUN python scripts/init_env.py \
+    && for service in . revenue_service municipal_service identity_service; do \
+         (cd "$service" && DJANGO_DEBUG=0 python manage.py collectstatic --noinput --verbosity 0) || exit 1; \
+       done \
+    && rm .env private/identity.pem \
+    && rmdir private
+
 EXPOSE 10000
 CMD ["python", "scripts/run_hosted.py"]
