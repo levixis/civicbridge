@@ -11,14 +11,19 @@ class TransportError(Exception):
         self.retryable = retryable
 
 
-def origin(value, allow_local=False):
+def origin(value, allow_local=False, *, path=''):
     p = urlparse(value)
-    if p.username or p.password or p.query or p.fragment or p.path not in ['', '/'] or not p.hostname:
+    if p.username or p.password or p.query or p.fragment or p.path not in (path, path + '/') or not p.hostname:
         raise TransportError('Invalid service origin.')
     trusted = ['127.0.0.1', 'localhost', '::1'] + [h for h in os.environ.get('INTERNAL_HTTP_HOSTS', '').split(',') if h]
     if p.scheme != 'https' and not (allow_local and p.scheme == 'http' and p.hostname in trusted):
         raise TransportError('HTTPS required; local HTTP is restricted to loopback.')
     return value.rstrip('/')
+
+
+def identity_issuer(value, allow_local=False):
+    path = '/identity' if urlparse(value).path in ('/identity', '/identity/') else ''
+    return origin(value, allow_local, path=path)
 
 
 def bounded_request(method, url, **kwargs):

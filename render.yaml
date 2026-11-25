@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: civicbridge
+    runtime: docker
+    plan: free
+    healthCheckPath: /health/
+    envVars:
+      - key: DEMO_CITIZEN_PASSWORD
+        generateValue: true
+      - key: DEMO_EDUCATION_PASSWORD
+        generateValue: true
+      - key: DEMO_WELFARE_PASSWORD
+        generateValue: true
+      - key: DEMO_OPERATOR_PASSWORD
+        generateValue: true
+      - key: DEMO_REVENUE_PASSWORD
+        generateValue: true
+      - key: DEMO_MUNICIPALITY_PASSWORD
+        generateValue: true

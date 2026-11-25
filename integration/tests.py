@@ -151,6 +151,23 @@ class PlatformTests(TestCase):
         for bad in [[{'id':'bad','kind':'shell','command':'x'}],WORKFLOW+WORKFLOW, [{'id':'url','kind':'fetch','connector':'http://attacker','scope':'income_certificate'},WORKFLOW[-1]]]:
             with self.assertRaises(ValidationError):ServiceDefinition.objects.create(code='bad',title='Bad',description='Test',department='X',workflow=bad)
 
+    def test_old_workflow_link_redirects_new_applications(self):
+        newer = ServiceDefinition.objects.create(
+            code=self.service.code, version=self.service.version + 1, title=self.service.title,
+            description=self.service.description, department=self.service.department,
+            workflow=WORKFLOW, published=True,
+        )
+        self.client.force_login(self.user)
+        old_path = reverse('platform_create', args=[self.service.pk])
+        new_path = reverse('platform_create', args=[newer.pk])
+        self.assertRedirects(self.client.get(old_path), new_path)
+        self.assertRedirects(self.client.post(old_path, {'description': 'Old form'}), new_path)
+        self.assertEqual(ServiceRequest.objects.count(), 1)
+        self.assertEqual(self.client.post(new_path, {'description': 'New version'}).status_code, 302)
+        self.assertTrue(ServiceRequest.objects.filter(definition=newer).exists())
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.definition, self.service)
+
     def test_owner_boundaries_csrf_and_operator_only_configuration(self):
         self.client.force_login(self.other)
         for name in ['platform_detail','platform_tracker']:

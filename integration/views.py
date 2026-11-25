@@ -64,6 +64,10 @@ def create(request, pk):
     if citizen is None or is_portal_staff(request.user):
         messages.info(request, 'Sign in with a citizen account to start an application.')
         return redirect('platform_workspace')
+    latest = ServiceDefinition.objects.filter(code=definition.code, published=True).first()
+    if latest.pk != definition.pk:
+        messages.info(request, 'This service has a newer workflow. Review its requirements before applying.')
+        return redirect('platform_create', pk=latest.pk)
     form=RequestForm(request.POST or None)
     if request.method=='POST' and form.is_valid():
         req=engine.submit(request.user,citizen,definition,form.cleaned_data)

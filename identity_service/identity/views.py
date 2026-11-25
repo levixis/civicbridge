@@ -20,7 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from common.authentication import EmailOrUsernameAuthenticationForm
 from common.tokens import b64, jwk, encode
-from common.http import origin
+from common.http import identity_issuer
 from .forms import IdentityRegistrationForm
 from .models import Subject,AuthorizationCode
 
@@ -41,7 +41,7 @@ def jwks(request):
 
 @require_GET
 def discovery(request):
-    base=origin(settings.SSO_ISSUER,settings.ALLOW_LOCAL_HTTP)
+    base=identity_issuer(settings.SSO_ISSUER,settings.ALLOW_LOCAL_HTTP)
     return JsonResponse({'issuer':base,'authorization_endpoint':base+'/authorize/','token_endpoint':base+'/token/',
         'jwks_uri':base+'/jwks/','response_types_supported':['code'],'grant_types_supported':['authorization_code'],
         'subject_types_supported':['public'],'id_token_signing_alg_values_supported':['RS256'],

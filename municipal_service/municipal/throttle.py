@@ -11,7 +11,7 @@ class ThrottleMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        login_post = request.method == "POST" and request.path in [
+        login_post = request.method == "POST" and request.path_info in [
             "/accounts/login/",
             "/admin/login/",
         ]

@@ -10,7 +10,9 @@ def configure(namespace, root, client, port):
     namespace['SSO_CLIENT_ID'] = client
     namespace['SSO_CLIENT_SECRET'] = os.environ['SSO_' + client.upper() + '_SECRET']
     namespace['SSO_REDIRECT_URI'] = os.environ.get('SSO_' + client.upper() + '_REDIRECT', f'http://127.0.0.1:{port}/sso/callback/')
-    namespace['SSO_HOME'] = '/services/workspace/' if client == 'portal' else '/'
+    callback_path = urlsplit(namespace['SSO_REDIRECT_URI']).path
+    mount_path = callback_path.removesuffix('/sso/callback/') if callback_path.endswith('/sso/callback/') else ''
+    namespace['SSO_HOME'] = '/services/workspace/' if client == 'portal' else mount_path + '/'
     if client == 'portal':
         # Explicit local demo subjects identify each source's own workspace.
         namespace['SSO_DEPARTMENT_ROUTES'] = {}
@@ -19,6 +21,8 @@ def configure(namespace, root, client, port):
                 'SSO_' + department.upper() + '_REDIRECT',
                 f'http://127.0.0.1:{source_port}/sso/callback/',
             )
-            destination = urlsplit(callback)._replace(path='/sso/login/', query='', fragment='').geturl()
+            url = urlsplit(callback)
+            prefix = url.path.removesuffix('/sso/callback/') if url.path.endswith('/sso/callback/') else ''
+            destination = url._replace(path=prefix + '/sso/login/', query='', fragment='').geturl()
             namespace['SSO_DEPARTMENT_ROUTES'][str(demo_subject(department))] = destination
     namespace['TEMPLATES'][0]['DIRS'].append(Path(root) / 'templates' / 'shared')

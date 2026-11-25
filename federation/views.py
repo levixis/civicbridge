@@ -14,7 +14,7 @@ from django.shortcuts import redirect
 from django.utils.crypto import constant_time_compare
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET
-from common.http import origin, bounded_request, get_json, TransportError
+from common.http import identity_issuer, bounded_request, get_json, TransportError
 from common.tokens import b64, validate
 from .models import FederatedIdentity
 
@@ -28,7 +28,7 @@ class SharedSignOutView(LogoutView):
 
 @require_GET
 def start(request, expected_role=None):
-    issuer=origin(settings.SSO_ISSUER, settings.ALLOW_LOCAL_HTTP)
+    issuer=identity_issuer(settings.SSO_ISSUER, settings.ALLOW_LOCAL_HTTP)
     state,nonce,verifier=secrets.token_urlsafe(32),secrets.token_urlsafe(32),secrets.token_urlsafe(48)
     next_url = request.GET.get('next', '')
     if not (next_url.startswith('/') and not next_url.startswith('//') and
@@ -49,8 +49,8 @@ def callback(request):
     if not attempt or not state or not constant_time_compare(state,attempt['state']) or time.time()-attempt['at']>300:
         return HttpResponseBadRequest('Sign-in state expired or did not match. Start sign-in again.')
     try:
-        issuer=origin(settings.SSO_ISSUER, settings.ALLOW_LOCAL_HTTP)
-        backchannel=origin(settings.SSO_BACKCHANNEL_URL, settings.ALLOW_LOCAL_HTTP)
+        issuer=identity_issuer(settings.SSO_ISSUER, settings.ALLOW_LOCAL_HTTP)
+        backchannel=identity_issuer(settings.SSO_BACKCHANNEL_URL, settings.ALLOW_LOCAL_HTTP)
         body,kind=bounded_request('POST',backchannel+'/token/', auth=(settings.SSO_CLIENT_ID,settings.SSO_CLIENT_SECRET),
             data={'grant_type':'authorization_code','code':request.GET.get('code',''),'redirect_uri':settings.SSO_REDIRECT_URI,'code_verifier':attempt['verifier']})
         if kind!='application/json': raise ValueError()

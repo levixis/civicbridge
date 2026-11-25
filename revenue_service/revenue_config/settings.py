@@ -70,7 +70,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
 ]
-STATIC_URL = "/static/"
+STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR.parent / "static"]
 STORAGES = {
@@ -83,9 +83,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LANGUAGE_CODE = "en-in"
 TIME_ZONE = "Asia/Kolkata"
 USE_TZ = True
-LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/accounts/login/"
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "registry"
+LOGOUT_REDIRECT_URL = "login"
 WSGI_APPLICATION = "revenue_config.wsgi.application"
 SESSION_COOKIE_NAME = "revenue_sessionid"
 CSRF_COOKIE_NAME = "revenue_csrftoken"
@@ -97,7 +97,7 @@ CSRF_COOKIE_SECURE = not DEBUG
 SECURE_SSL_REDIRECT = not DEBUG
 # Source API lives on a trusted internal network; portal->source HTTPS is required for remote deployments.
 SECURE_REDIRECT_EXEMPT = (
-    [r"^health/$", r"^api/v1/income/"]
+    [r"^health/$", r"^api/v1/"]
     if os.environ.get("ALLOW_LOCAL_HTTP", "0") == "1"
     else []
 )

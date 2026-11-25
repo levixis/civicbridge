@@ -1,3 +1,4 @@
+import os
 import secrets
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -12,7 +13,7 @@ class Command(BaseCommand):
         for name in ['citizen','education','welfare','operator','revenue','municipality']:
             user,created=User.objects.get_or_create(username=name)
             if created:
-                password=secrets.token_urlsafe(15)
+                password = os.environ.get(f'DEMO_{name.upper()}_PASSWORD') or secrets.token_urlsafe(15)
                 user.set_password(password);user.save()
                 self.stdout.write(f'Identity sign-in: {name} / {password}')
             subject, _ = Subject.objects.get_or_create(user=user, defaults={'identifier': demo_subject(name)})

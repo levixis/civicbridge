@@ -1,8 +1,10 @@
 .env
 .venv
+.git
+outputs
+private
+**/.DS_Store
 **/__pycache__
 **/*.sqlite3
 **/staticfiles
-.git
 *.zip
-private

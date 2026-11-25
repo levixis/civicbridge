@@ -13,8 +13,8 @@ class ThrottleMiddleware:
 
     def __call__(self, request):
         login_post = request.method == "POST" and (
-            request.path in ("/accounts/login/", "/admin/login/")
-            or (request.path == "/authorize/" and request.GET.get("prompt") == "login")
+            request.path_info in ("/accounts/login/", "/admin/login/")
+            or (request.path_info == "/authorize/" and request.GET.get("prompt") == "login")
         )
         key = None
         if login_post:
