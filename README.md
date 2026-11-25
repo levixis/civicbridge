@@ -2,6 +2,8 @@
 
 CivicBridge is a Django project that lets citizens apply for a service and authorise departments to share existing records. It demonstrates the [SIH26129 interoperability challenge](https://sih.gov.in/sih2026PS) and the INT253 Django syllabus using fictional records. Revenue and Municipality each keep their own database. The portal coordinates the exchange, review and decision.
 
+[Open the hosted grading demo](https://civicbridge-u80b.onrender.com/services/).
+
 - [Run locally](#run-locally)
 - [Walk through the demo](#walk-through-the-demo)
 - [Find and explain the code](#find-and-explain-the-code)
